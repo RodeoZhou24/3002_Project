@@ -3,6 +3,17 @@
 #include <string>
 #include <ctime>
 
+/**
+ * @brief Dynamic Pricing Strategy for Consumer Electronics
+ * @author Zhou Lexian (124090944)
+ *
+ * This module models a holistic pricing engine that:
+ * - Tracks product, stock, and user-behavior signals
+ * - Reacts to competitor moves and seasonal shifts
+ * - Applies layered strategies for new models and demand swings
+ * - Explains every adjustment for downstream auditing
+ */
+
 namespace pricing {
 
 struct Product {
