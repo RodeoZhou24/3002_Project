@@ -1,0 +1,31 @@
+# Build directories
+cmake-build-debug/
+cmake-build-release/
+build/
+*.o
+*.a
+*.so
+*.dylib
+
+# Executables
+main
+pricing_demo
+thread_demo
+
+# IDE files (可选择性忽略，目前保留)
+# .idea/
+
+# Generated output files (可选，如果需要保留历史可以注释掉)
+output/*.log
+output/*.csv
+
+# System files
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.bak
+

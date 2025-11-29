@@ -9,6 +9,8 @@
 #include "PricingStrategy.h"  // 需要定价策略模块
 #include <random>
 #include <algorithm>
+#include <ctime>
+#include <cstdlib>
 
 // ============================================================================
 // ThreadSafePriceTable 实现
@@ -127,14 +129,12 @@ ThreadManager::~ThreadManager() {
 }
 
 void ThreadManager::startPricing(const std::vector<Merchant>& merchants, 
-                                  PricingStrategy& strategy) {
+                                  pricing::PricingStrategy& strategy) {
     
     std::cout << "\n🚀 Starting multi-threaded pricing with " 
               << merchants.size() << " merchants...\n" << std::endl;
     
     stopFlag = false;
-
-      merchantsCopy = merchants; //拷贝一份数据
     
     // 为每个商家创建一个线程
     for (const auto& merchant : merchants) {
@@ -152,7 +152,7 @@ void ThreadManager::startPricing(const std::vector<Merchant>& merchants,
 }
 
 void ThreadManager::merchantPricingThread(const Merchant& merchant, 
-                                           PricingStrategy& strategy) {
+                                           pricing::PricingStrategy& strategy) {
     
     std::string threadLog = "[Thread-" + merchant.name + "] Started";
     logger->log(threadLog);
@@ -195,7 +195,7 @@ void ThreadManager::merchantPricingThread(const Merchant& merchant,
 
 PricingTask ThreadManager::executePricingTask(const std::string& merchantName,
                                                const std::string& productId,
-                                               PricingStrategy& strategy) {
+                                               pricing::PricingStrategy& strategy) {
     PricingTask task;
     task.merchantName = merchantName;
     task.productId = productId;
@@ -215,29 +215,51 @@ PricingTask ThreadManager::executePricingTask(const std::string& merchantName,
         
         task.basePrice = currentPrice;
         
-        // 3. 生成定价因素（实际项目中应从数据模块获取）
-        PricingFactors factors;
-        factors.stockLevel = 0.3 + (std::rand() % 70) / 100.0;  // 0.3-1.0
-        factors.competitorPrice = currentPrice * (0.92 + (std::rand() % 16) / 100.0);
-        factors.demandTrend = -0.5 + (std::rand() % 100) / 100.0;  // -0.5 ~ 0.5
-        factors.seasonalFactor = 1.0;
-        factors.isNewRelease = false;
+        // 3. 创建产品和市场上下文（实际项目中应从数据模块获取）
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> stockDist(50, 500);
+        std::uniform_int_distribution<> viewDist(100, 2000);
+        std::uniform_int_distribution<> cartDist(20, 400);
+        std::uniform_int_distribution<> purchaseDist(5, 80);
+        std::uniform_real_distribution<> demandDist(50.0, 250.0);
+        std::uniform_real_distribution<> competitorPriceDist(0.85, 1.15);
         
-        // 区分产品类型
+        // 确定产品类别
+        std::string category = "other";
         if (productId.find("iPhone") != std::string::npos) {
-            factors.productType = "smartphone";
+            category = "smartphone";
         } else if (productId.find("MacBook") != std::string::npos) {
-            factors.productType = "laptop";
+            category = "laptop";
         } else if (productId.find("RTX") != std::string::npos) {
-            factors.productType = "gpu";
-        } else {
-            factors.productType = "other";
+            category = "gpu";
         }
         
+        pricing::Product product;
+        product.id = productId;
+        product.name = productId;
+        product.category = category;
+        product.basePrice = currentPrice;
+        product.stock = stockDist(gen);
+        product.isNewModel = (productId.find("New") != std::string::npos);
+        product.series = category;
+        
+        pricing::MarketContext context;
+        context.competitorPrice = currentPrice * competitorPriceDist(gen);
+        context.demandForecast = demandDist(gen);
+        context.isPeakSeason = (std::rand() % 10 < 3);  // 30% 概率是旺季
+        context.viewCount = viewDist(gen);
+        context.cartCount = cartDist(gen);
+        context.purchaseCount = purchaseDist(gen);
+        std::time_t now = std::time(nullptr);
+        context.currentTime = *std::localtime(&now);
+        context.newerModelInSeriesAvailable = (std::rand() % 10 < 2);  // 20% 概率有新款
+        
         // 4. 调用定价策略计算新价格
-        double newPrice = strategy.calculatePrice(currentPrice, factors);
+        pricing::PricingResult result = strategy.calculatePrice(product, context);
+        double newPrice = result.newPrice;
         task.adjustedPrice = newPrice;
-        task.stockLevel = static_cast<int>(factors.stockLevel * 500);  // 假设最大库存500
+        task.stockLevel = product.stock;
         
         // 5. 更新价格表
         priceTable.setPrice(productId, newPrice);
@@ -391,7 +413,7 @@ void ThreadManager::addTask(const PricingTask& task) {
     queueCV.notify_one();  // 唤醒一个工作线程
 }
 
-void ThreadManager::startWorkers(int numWorkers, PricingStrategy& strategy) {
+void ThreadManager::startWorkers(int numWorkers, pricing::PricingStrategy& strategy) {
     std::cout << "\n🔧 Starting " << numWorkers << " worker threads...\n" << std::endl;
     
     stopFlag = false;

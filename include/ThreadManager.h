@@ -24,8 +24,10 @@
 #include <iomanip>
 #include <sstream>
 
-// 前向声明（假设其他模块已实现）
-class PricingStrategy;
+// 前向声明
+namespace pricing {
+    class PricingStrategy;
+}
 
 /**
  * @brief 商家信息结构
@@ -166,14 +168,14 @@ private:
     /**
      * @brief 商家定价线程函数
      */
-    void merchantPricingThread(const Merchant& merchant, PricingStrategy& strategy);
+    void merchantPricingThread(const Merchant& merchant, pricing::PricingStrategy& strategy);
     
     /**
      * @brief 执行单个定价任务
      */
     PricingTask executePricingTask(const std::string& merchantName,
                                     const std::string& productId,
-                                    PricingStrategy& strategy);
+                                    pricing::PricingStrategy& strategy);
     
     /**
      * @brief 记录价格变更历史
@@ -204,7 +206,7 @@ public:
     /**
      * @brief 启动多商家定价（主入口）
      */
-    void startPricing(const std::vector<Merchant>& merchants, PricingStrategy& strategy);
+    void startPricing(const std::vector<Merchant>& merchants, pricing::PricingStrategy& strategy);
     
     /**
      * @brief 等待所有线程完成
@@ -239,7 +241,7 @@ public:
     /**
      * @brief 任务队列模式：启动工作线程
      */
-    void startWorkers(int numWorkers, PricingStrategy& strategy);
+    void startWorkers(int numWorkers, pricing::PricingStrategy& strategy);
 };
 
 #endif // THREAD_MANAGER_H
