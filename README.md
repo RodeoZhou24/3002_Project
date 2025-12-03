@@ -1,51 +1,103 @@
-# 动态定价与销售预测模块 (3002 Project)
+# C++ Intelligent Inventory Warning & Dynamic Pricing System  
+# 基于 C++ 的电子产品智能库存预警与动态定价系统
 
-## 项目概述
-本项目旨在为电子产品提供一个**多因素动态定价和销售预测系统**。系统通过加载历史销售数据、预测未来销量，并结合库存情况、竞争对手价格、市场需求等因素，自动计算推荐销售价格，帮助企业提升收益并优化库存周转率。
+## 📖 项目背景 (Introduction)
 
-## 模块组成
-| 模块 | 主要功能简述 |
-|-----------------|---------------|
-| **DataLoader** | 从文件中读取销售日期、产品编号、销量、价格和库存等数据，形成内部数据结构供后续模块使用。 |
-| **Forecaster** | 使用移动平均法计算销量预测，并可显示预测结果，包括每个时间点的实际值和预测值。 |
-| **PricingStrategy** | 根据库存压力、竞争者价格差异、需求预测和季节性因素等权重计算价格调整幅度，返回新的建议价格及调整解释。 |
-| **InventoryAlert** | 监控库存水平，向上层触发缺货或超储警告（待完善）。 |
-| **ThreadManager** | 管理多线程任务，确保预测和定价计算的并发安全运行。 |
+本项目是针对**电子产品（智能手机、笔记本电脑、显卡等）**垂直领域的智能决策系统。针对电子产品价格敏感度高、更新换代快、季节性需求波动大等特点，我们实现了一个从**销量预测**到**库存预警**，再到**动态定价**的完整商业逻辑闭环。
 
-## 文件结构
+系统完全基于 **C++ Standard Library** 开发，不依赖任何第三方库，旨在展示底层工程能力与算法落地的结合。
+
+## 🌟 核心亮点 (Project Highlights)
+
+### 1. 纯 C++ 工程实现（Zero Dependencies）
+
+坚持低依赖设计，仅使用 `std::thread`, `std::mutex`, `fstream` 等标准库，确保可移植性与底层机制可控。
+
+### 2. 电子产品专属策略（Domain-Specific Strategy）
+
+- **生命周期管理**：识别新品发布，自动对旧机型应用清仓折扣策略。  
+- **市场博弈机制**：监控竞品价格差，动态调整竞争力度。  
+- **季节性感知**：对“618”“双11”等购物节及每日黄金时段（10:00–16:00）自动调整价格弹性。
+
+### 3. 高并发模拟（Concurrency Simulation）
+
+模拟多商家（Merchant Threads）并行定价场景，使用 `std::shared_mutex` 确保价格表读写安全，真实还原电商后台的竞争过程。
+
+### 4. 数据可视化闭环（Visualization）
+
+输出 HTML 仪表盘与 CSV 趋势报表，结合 Chart.js，将算法结果转化为可视化商业洞察。
+
+## 🏗️ 系统架构 (System Architecture)
+
+系统采用模块化设计，包含五个核心层级：
+
+1. **DataLoader（数据层）**  
+   负责 CSV 数据解析与加载，构建历史销量序列。
+
+2. **Forecaster（预测层）**  
+   使用移动平均法（Moving Average）预测未来销量。
+
+3. **InventoryAlert（预警层）**  
+   通过供需比计算库存压力，触发多级预警（GREEN → CRITICAL）。
+
+4. **PricingStrategy（定价层）**  
+   核心公式：  
+   `Adjustment = w1*Stock + w2*Competitor + w3*Demand + w4*Seasonality`
+
+5. **ThreadManager / Visualizer（并发与输出）**  
+   管理多线程行为、生成日志与可视化结果。
+
+## 👨‍💻 贡献者 (Contributors)
+
+项目由 CSC3002 小组共同开发：
+
+- Wang Jiarui (124090612)  
+- Zhao Runtian (124090988)  
+- Zhao Yuhui (124030125)  
+- Zhou Lexian (124090944)  
+- Pan Kangnian (124090487)
+
+## 🛠️ 快速开始 (Quick Start)
+
+### 1. 环境要求
+
+- C++17 兼容编译器（GCC / Clang / MSVC）
+- CMake 3.16+
+
+### 2. 编译
+
+```bash
+mkdir build && cd build
+cmake ..
+cmake --build .
 ```
-.
-├── CMakeLists.txt        # CMake 配置文件，设置编译选项与依赖
-├── DataLoader.h / .cpp   # 数据加载类定义与实现
-├── Forecaster.h / .cpp   # 销售预测类定义与实现
-├── PricingStrategy.h / .cpp  # 定价策略类定义与实现
-├── InventoryAlert.h / .cpp   # 库存预警模块（待完善）
-├── ThreadManager.h / .cpp    # 线程管理模块
-├── sales_history.txt      # 示例数据文件
-└── README.md             # 项目说明（即本文件）
+
+### 3. 运行
+
+确保 `sales_history.txt` 位于项目根目录。
+
+```bash
+# Linux / macOS
+./main
+
+# Windows
+main.exe
 ```
 
-## 构建说明
-项目使用**CMake**构建，需准备支持 C++17 的编译器。示例流程如下：
+### 4. 查看结果（Output）
 
+程序将在 `output/` 目录生成：
+
+- `dashboard.html`：交互式动态定价仪表盘  
+- `pricing.log`：定价线程执行日志  
+- `price_trend.csv`：价格趋势数据
+
+## 📊 数据格式示例
+
+`sales_history.txt` 文件示例：
+
+```csv
+date,productId,sales,price,stock
+2025-10-01,P1001,10,2999.0,100
+2025-10-02,P1001,15,2999.0,85
 ```
-# 在项目根目录执行
-mkdir build && cd build         # 创建并进入构建目录
-cmake ..                        # 生成 Makefiles 或项目文件
-cmake --build .                # 编译生成可执行文件（测试程序）
-```
-编译成功后，可执行文件会位于`build`目录中。若需要运行测试或示例程序，请根据生成的可执行文件名运行。
-
-## 使用方法
-1. 准备好历史销售数据文件（参考 `sales_history.txt`），按日期、产品编号、销量、价格、库存等字段格式填写。
-2. 在应用代码中包含各模块头文件，如 `#include "DataLoader.h"`、`#include "Forecaster.h"`、`#include "PricingStrategy.h"`。
-3. 调用 `DataLoader` 读取数据，并使用 `Forecaster` 生成销量预测。
-4. 构建 `Product` 和 `MarketContext` 结构体，调用 `PricingStrategy::calculatePrice()` 获取新价格及解释信息。
-5. 根据需要对库存报警模块、线程管理等做进一步集成。
-
-## Contribute指南
-按以下建议协作开发：
-1. **分支管理**：为每个新特性或修复创建独立分支，完成后通过 Pull Request 合并到 `main`。
-2. **提交规范**：提交信息应简洁明了，说明修改目的与主要变动。
-3. **代码风格**：保持一致的 C++ 风格和命名规范，必要时在 `README` 中补充约定。
-4. **文档更新**：新增或修改模块时，请同步更新本 README，确保项目文档完整。
