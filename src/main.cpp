@@ -7,7 +7,7 @@
 #include "Forecaster.h"
 #include "InventoryAlert.h"
 #include "PricingStrategy.h"
-#include "Visualizer.h"
+#include "../include/Visualizer.h"
 #include <iostream>
 #include <vector>
 #include <map>

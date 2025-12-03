@@ -3,7 +3,7 @@
  * @brief 实现 HTML 注入逻辑与自动打开浏览器 (Design Replica Version v1.2)
  */
 
-#include "Visualizer.h"
+#include "../include/Visualizer.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
