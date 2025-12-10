@@ -1,76 +1,27 @@
-=== Pricing System Started ===
-[Thread-Apple官方店] Started
-[Thread-京东自营] Started
-[Thread-天猫旗舰] Started
-[Thread-苏宁易购] Started
-All merchant threads started
-[Thread-拼多多] Started
-[天猫旗舰] iPhone-15-Pro-Max: ¥11179.93 → ¥11870.74 (+6.18%)
-[京东自营] iPhone-15-Pro: ¥6251.90 → ¥6420.70 (+2.70%)
-[苏宁易购] MacBook-Pro-14: ¥9872.67 → ¥10252.55 (+3.85%)
-[Apple官方店] iPhone-15-Pro: ¥6598.15 → ¥6302.37 (-4.48%)
-[拼多多] iPhone-15-Pro: ¥11987.12 → ¥11960.21 (-0.22%)
-[苏宁易购] MacBook-Pro-16: ¥13985.81 → ¥13741.06 (-1.75%)
-[拼多多] RTX-4080: ¥14418.47 → ¥15254.74 (+5.80%)
-[Apple官方店] iPhone-15-Pro-Max: ¥11870.74 → ¥12410.91 (+4.55%)
-[苏宁易购] RTX-4080: ¥15254.74 → ¥15575.49 (+2.10%)
-[京东自营] MacBook-Pro-14: ¥10252.55 → ¥10847.20 (+5.80%)
-[天猫旗舰] RTX-4090: ¥10910.75 → ¥11920.00 (+9.25%)
-[Apple官方店] MacBook-Pro-14: ¥10847.20 → ¥11980.73 (+10.45%)
-[京东自营] RTX-4090: ¥11920.00 → ¥13306.97 (+11.64%)
-[拼多多] RTX-4090: ¥13306.97 → ¥13333.58 (+0.20%)
-[Thread-京东自营] Completed: 3 products
-[Thread-苏宁易购] Completed: 3 products
-[Thread-Apple官方店] Completed: 3 products
-[天猫旗舰] MacBook-Pro-16: ¥13741.06 → ¥14062.48 (+2.34%)
-[Thread-拼多多] Completed: 3 products
-[Thread-天猫旗舰] Completed: 3 products
-=== Pricing System Started ===
-[Thread-Apple官方店] Started
-[Thread-京东自营] Started
-[Thread-苏宁易购] Started
-[Thread-天猫旗舰] Started
-All merchant threads started
-[Thread-拼多多] Started
-=== Pricing System Started ===
-All merchant threads started
-[Thread-商家A-P1001] Started
-[Thread-商家B-P1001] Started
-[Thread-商家A-P1002] Started
-[Thread-商家B-P1002] Started
-[商家B-P1001] P1001: ¥10967.56 → ¥11707.87 (+6.75%)
-[商家B-P1002] P1002: ¥8596.55 → ¥8488.41 (-1.26%)
-[商家A-P1001] P1001: ¥8049.23 → ¥8428.34 (+4.71%)
-[商家A-P1002] P1002: ¥6661.30 → ¥6911.10 (+3.75%)
-[Thread-商家A-P1001] Completed: 1 products
-[Thread-商家B-P1001] Completed: 1 products
-[Thread-商家B-P1002] Completed: 1 products
-[Thread-商家A-P1002] Completed: 1 products
-=== Pricing System Started ===
-All merchant threads started
-[Thread-商家A-P1001] Started
-[Thread-商家A-P1002] Started
-[商家A-P1001] P1001: ¥13832.45 → ¥14524.07 (+5.00%)
-[Thread-商家B-P1002] Started
-[商家A-P1002] P1002: ¥12125.05 → ¥12715.09 (+4.87%)
-[商家B-P1002] P1002: ¥12715.09 → ¥13032.97 (+2.50%)
-[Thread-商家B-P1001] Started
-[商家B-P1001] P1001: ¥14524.07 → ¥14153.71 (-2.55%)
-[Thread-商家B-P1001] Completed: 1 products
-[Thread-商家A-P1002] Completed: 1 products
-[Thread-商家A-P1001] Completed: 1 products
-[Thread-商家B-P1002] Completed: 1 products
-=== Pricing System Started ===
-[Thread-商家A-P1001] Started
-[Thread-商家B-P1001] Started
-All merchant threads started
-[Thread-商家A-P1002] Started
-[Thread-商家B-P1002] Started
-[商家A-P1002] P1002: ¥10544.26 → ¥11358.25 (+7.72%)
-[商家B-P1002] P1002: ¥11686.46 → ¥12132.48 (+3.82%)
-[商家B-P1001] P1001: ¥5415.72 → ¥5480.70 (+1.20%)
-[商家A-P1001] P1001: ¥8892.39 → ¥9012.55 (+1.35%)
-[Thread-商家B-P1001] Completed: 1 products
-[Thread-商家B-P1002] Completed: 1 products
-[Thread-商家A-P1002] Completed: 1 products
-[Thread-商家A-P1001] Completed: 1 products
+=== Pricing System Started (2025-12-10) ===
+[Thread-商家A-iPhone-15-Pro] Started
+[Thread-商家B-iPhone-15-Pro] Started
+[Thread-商家A-MacBook-Pro-14] Started
+[Thread-商家B-MacBook-Pro-14] Started
+[Thread-商家A-AirPods-Pro-2] Started
+[iPhone-15-Pro] pre-11.11 normal: stock=150 demand=12 adj=+0.0% price: 2999 -> 2999
+[iPhone-15-Pro] 11.11 peak boost +18%: price 2899 -> 3799
+[iPhone-15-Pro] 11.12 peak boost +20%: price 2899 -> 3899
+[iPhone-15-Pro] 12.10 12.12-prep +10%: price 2899 -> 3890
+[iPhone-15-Pro] 12.12 mega +15%: price 2899 -> 4210
+[MacBook-Pro-14] pre-11.11 normal: stock=120 demand=9 adj=+0.0% price: 5999 -> 5999
+[MacBook-Pro-14] 11.11 peak boost +18%: price 5999 -> 7299
+[MacBook-Pro-14] 11.12 peak boost +21%: price 5999 -> 7599
+[MacBook-Pro-14] 12.10 12.12-prep +11%: price 5999 -> 7480
+[MacBook-Pro-14] 12.12 mega +17%: price 5999 -> 7990
+[AirPods-Pro-2] pre-11.11 normal: stock=260 demand=20 adj=+0.0% price: 1299 -> 1299
+[AirPods-Pro-2] 11.11 peak boost +12%: price 1299 -> 1499
+[AirPods-Pro-2] 11.12 peak boost +15%: price 1299 -> 1555
+[AirPods-Pro-2] 12.10 12.12-prep +7%: price 1299 -> 1515
+[AirPods-Pro-2] 12.12 mega +12%: price 1299 -> 1600
+[Thread-商家A-iPhone-15-Pro] Completed
+[Thread-商家B-iPhone-15-Pro] Completed
+[Thread-商家A-MacBook-Pro-14] Completed
+[Thread-商家B-MacBook-Pro-14] Completed
+[Thread-商家A-AirPods-Pro-2] Completed
+=== Pricing System Completed ===

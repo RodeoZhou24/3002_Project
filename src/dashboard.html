@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>动态定价可视化面板</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #0b1221;
+      --panel: #111827;
+      --card: #111827;
+      --border: #1f2937;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --green: #10b981;
+      --red: #ef4444;
+      --amber: #f59e0b;
+      --blue: #3b82f6;
+      --purple: #8b5cf6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 16px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 18px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      gap: 12px;
+    }
+    .title {
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+    .controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    button, label.button {
+      border: 1px solid var(--border);
+      background: #1f2937;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    button.primary {
+      background: var(--green);
+      border-color: var(--green);
+      color: #0b1221;
+    }
+    input[type="file"] { display: none; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 12px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.95rem;
+    }
+    .metric .value { font-size: 1.4rem; font-weight: 700; }
+    .muted { color: var(--muted); }
+    .badge {
+      border-radius: 999px;
+      padding: 2px 10px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .b-green { background: rgba(16,185,129,0.15); color: var(--green); }
+    .b-amber { background: rgba(245,158,11,0.15); color: var(--amber); }
+    .b-red { background: rgba(239,68,68,0.15); color: var(--red); }
+    .b-blue { background: rgba(59,130,246,0.15); color: var(--blue); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 0.9rem;
+    }
+    th, td {
+      padding: 8px 6px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th { color: var(--muted); font-weight: 600; }
+    tr:hover { background: rgba(255,255,255,0.02); }
+    .flex {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .section-title {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .log-box {
+      background: #000;
+      color: #a5f3fc;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      height: 220px;
+      overflow: auto;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      padding: 10px;
+      font-size: 0.85rem;
+    }
+    .pill { padding: 2px 8px; border-radius: 6px; border: 1px solid var(--border); }
+    .chart-wrap { min-height: 320px; }
+    footer {
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .hint { color: var(--amber); font-weight: 600; }
+    @media (max-width: 900px) {
+      header { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <div class="title">动态定价可视化面板</div>
+      <div class="muted">读取 C++ 后端产出的 CSV/日志或用户上传的数据文件</div>
+    </div>
+    <div class="controls">
+      <label class="button" for="fileUpload">📁 上传 CSV / 日志</label>
+      <input id="fileUpload" type="file" accept=".csv,.txt" multiple />
+      <button id="refreshBtn" class="button">🔄 重新读取 output/</button>
+      <button id="demoBtn" class="button">📊 使用内置示例</button>
+      <span class="pill" id="sourceTag">数据源: 未加载</span>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="card">
+      <div class="metric">
+        <span>产品数</span>
+        <span class="value" id="metricProducts">-</span>
+      </div>
+      <div class="muted" id="metricProductsHint">等待数据</div>
+    </div>
+    <div class="card">
+      <div class="metric">
+        <span>活跃告警</span>
+        <span class="value" id="metricAlerts">-</span>
+      </div>
+      <div class="muted" id="metricAlertsHint">等待数据</div>
+    </div>
+    <div class="card">
+      <div class="metric">
+        <span>最后更新时间</span>
+        <span class="value" id="metricUpdated">-</span>
+      </div>
+      <div class="muted">来源：price_trend_detailed.csv / pricing.log</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card" style="min-width: 300px;">
+      <div class="section-title">产品选择</div>
+      <select id="productSelect" style="width: 100%; padding: 8px; background: #1f2937; border: 1px solid var(--border); color: var(--text); border-radius: 8px;"></select>
+      <div style="margin-top: 10px;" class="muted">选择产品以查看价格/需求曲线</div>
+      <div id="productInfo" style="margin-top: 10px; line-height: 1.6;"></div>
+    </div>
+    <div class="card" style="grid-column: span 2;">
+      <div class="section-title">价格 & 需求趋势</div>
+      <div class="chart-wrap">
+        <canvas id="priceChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card" style="grid-column: span 3;">
+      <div class="section-title">定价因子分解（取该商品最新一条记录）</div>
+      <table id="factorTable">
+        <thead>
+          <tr>
+            <th>因子</th>
+            <th>数值</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="muted" style="margin-top: 6px;">若 CSV 无因子列，自动显示“-”。可选列：factorStock,factorCompetitor,factorDemand,factorTime,adjustment。</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card" style="grid-column: span 2;">
+      <div class="section-title">库存告警</div>
+      <div class="muted">来自预测需求 vs 库存的告警级别</div>
+      <table id="alertsTable">
+        <thead>
+          <tr>
+            <th>产品</th>
+            <th>当前库存</th>
+            <th>预测需求</th>
+            <th>告警级别</th>
+            <th>最新价格</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="card" style="grid-column: span 2;">
+      <div class="section-title">定价结果</div>
+      <div class="muted">基于 price_trend_detailed.csv 中的 basePrice / finalPrice</div>
+      <table id="pricingTable">
+        <thead>
+          <tr>
+            <th>产品</th>
+            <th>日期</th>
+            <th>原价</th>
+            <th>最终价</th>
+            <th>涨幅</th>
+            <th>库存</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card" style="grid-column: span 2;">
+      <div class="section-title">运行日志 (pricing.log)</div>
+      <div class="flex muted">
+        <span>仅展示最近 50 行；文件不存在时自动忽略。</span>
+      </div>
+      <div id="logBox" class="log-box">尚未加载日志。</div>
+    </div>
+  </div>
+
+  <footer>
+    <span>使用方式：将本文件放在项目 `src/`，运行后端生成 `output/*.csv` 与 `output/pricing.log`，刷新即可查看。或直接上传 CSV/日志文件。</span>
+    <span class="hint" id="statusHint">状态：等待数据</span>
+  </footer>
+
+  <input type="file" id="hiddenCsvInput" accept=".csv,.txt" style="display:none;" />
+
+  <!-- 使用指南弹窗 -->
+  <div id="guideModal" style="position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 9999;">
+    <div style="width: min(600px, 90vw); background: #0f172a; border: 1px solid #1f2937; border-radius: 12px; padding: 18px; box-shadow: 0 20px 60px rgba(0,0,0,0.4);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <div style="font-weight: 700; font-size: 1.05rem;">使用指南</div>
+        <button id="guideClose" class="button" style="border: none; background: #1f2937; color: #e5e7eb;">关闭</button>
+      </div>
+      <ol style="padding-left: 18px; line_height: 1.7; color: #e5e7eb; margin: 0; font-size: 0.95rem;">
+        <li>看现成结果：直接点右上“🔄 重新读取 output/”，自动读取 output 目录里的数据。</li>
+        <li>自己换数据：点“📁 上传 CSV / 日志”，选销售数据 CSV（price_trend_detailed.csv）和日志（pricing.log，可选）。</li>
+        <li>没数据也能看：点“📊 使用内置示例”，立即展示示例图表。</li>
+        <li>切换商品：左侧下拉框切换产品；图上黄色条是旺季，表格里能看到旺季加价百分比。</li>
+        <li>看不到更新？强制刷新（Cmd+Shift+R / Ctrl+F5）或用无痕窗口。</li>
+      </ol>
+      <div style="margin-top: 12px; color: #94a3b8; font-size: 0.85rem;">商家只需准备 CSV 放在 output 或上传；其余操作都在页面按钮完成，无需编程。可选列：isPeakSeason、seasonalAdjustment、competitorPrice、competitorGap。</div>
+    </div>
+  </div>
+
+  <script>
+    const priceChartCtx = document.getElementById('priceChart').getContext('2d');
+    let priceChart;
+
+    const state = {
+      rows: [],
+      products: [],
+      alerts: [],
+      productMap: new Map(),
+      logLines: [],
+      source: '未加载',
+      updatedAt: ''
+    };
+
+    const els = {
+      productSelect: document.getElementById('productSelect'),
+      productInfo: document.getElementById('productInfo'),
+      alertsTable: document.querySelector('#alertsTable tbody'),
+      pricingTable: document.querySelector('#pricingTable tbody'),
+      logBox: document.getElementById('logBox'),
+      sourceTag: document.getElementById('sourceTag'),
+      metricProducts: document.getElementById('metricProducts'),
+      metricProductsHint: document.getElementById('metricProductsHint'),
+      metricAlerts: document.getElementById('metricAlerts'),
+      metricAlertsHint: document.getElementById('metricAlertsHint'),
+      metricUpdated: document.getElementById('metricUpdated'),
+      statusHint: document.getElementById('statusHint')
+    };
+
+    const alertClass = (level) => {
+      const upper = (level || '').toUpperCase();
+      if (upper === 'CRITICAL' || upper === 'HIGH') return 'b-red';
+      if (upper === 'MEDIUM') return 'b-amber';
+      return 'b-green';
+    };
+
+    const parseBool = (val) => {
+      if (val === undefined || val === null) return false;
+      const v = String(val).toLowerCase();
+      return v === 'true' || v === '1' || v === 'yes';
+    };
+
+    function parseCSV(text) {
+      const lines = text.trim().split(/\r?\n/);
+      const headers = lines[0].split(',').map(h => h.trim());
+      return lines.slice(1).map(line => {
+        const cols = line.split(',');
+        const obj = {};
+        headers.forEach((h, i) => obj[h] = cols[i] !== undefined ? cols[i].trim() : '');
+        return obj;
+      });
+    }
+
+    function ingestRows(rows) {
+      state.rows = rows.map(r => ({
+        date: r.date,
+        productId: r.productId,
+        basePrice: Number(r.basePrice || 0),
+        finalPrice: Number(r.finalPrice || r.adjusted_price || 0),
+        stock: Number(r.stock || r.stock_level || 0),
+        alertLevel: r.alertLevel || 'GREEN',
+        sales: Number(r.sales || 0),
+        predictedDemand: Number(r.predictedDemand || r.demand || 0),
+        isPeakSeason: parseBool(r.isPeakSeason),
+        seasonalAdjustment: Number(r.seasonalAdjustment || 0),
+        competitorPrice: Number(r.competitorPrice || 0),
+      competitorGap: Number(r.competitorGap || 0), // 差异百分比（本价-竞价）/竞价
+      factorStock: Number(r.factorStock || r.stockFactor || 0),
+      factorCompetitor: Number(r.factorCompetitor || r.competitorFactor || 0),
+      factorDemand: Number(r.factorDemand || r.demandFactor || 0),
+      factorTime: Number(r.factorTime || r.timeFactor || 0),
+      adjustment: Number(r.adjustment || 0)
+      }));
+
+      const productMap = new Map();
+      state.rows.forEach(row => {
+        if (!productMap.has(row.productId)) productMap.set(row.productId, []);
+        productMap.get(row.productId).push(row);
+      });
+      productMap.forEach(list => list.sort((a, b) => a.date.localeCompare(b.date)));
+
+      state.productMap = productMap;
+      state.products = Array.from(productMap.keys());
+
+      const alerts = [];
+      productMap.forEach((list, pid) => {
+        const last = list[list.length - 1];
+        alerts.push({
+          productId: pid,
+          stock: last?.stock ?? 0,
+          predictedDemand: last?.predictedDemand ?? 0,
+          alertLevel: last?.alertLevel || 'GREEN',
+          finalPrice: last?.finalPrice ?? 0
+        });
+      });
+      state.alerts = alerts;
+      state.updatedAt = new Date().toLocaleString();
+      renderAll();
+    }
+
+    function renderProductSelect() {
+      els.productSelect.innerHTML = '';
+      if (state.products.length === 0) {
+        els.productSelect.innerHTML = '<option>无产品</option>';
+        els.productInfo.innerHTML = '<span class="muted">尚未加载数据</span>';
+        return;
+      }
+      state.products.forEach(pid => {
+        const opt = document.createElement('option');
+        opt.value = pid;
+        opt.textContent = pid;
+        els.productSelect.appendChild(opt);
+      });
+      els.productSelect.value = state.products[0];
+      renderProductInfo(state.products[0]);
+    }
+
+    function renderProductInfo(pid) {
+      const list = state.productMap.get(pid) || [];
+      const last = list[list.length - 1] || {};
+      const peakFlag = last.isPeakSeason ? '旺季' : '常规';
+      const compGapPct = last.competitorGap
+        ? (last.competitorGap * 100).toFixed(1)
+        : (last.competitorPrice
+            ? (((last.finalPrice || last.basePrice) - last.competitorPrice) / last.competitorPrice * 100).toFixed(1)
+            : '0.0');
+      els.productInfo.innerHTML = `
+        <div>最新价格：<strong>¥${(last.finalPrice || 0).toFixed(2)}</strong></div>
+        <div>竞品价格：${last.competitorPrice ? '¥' + last.competitorPrice.toFixed(2) : '未提供'}</div>
+        <div>相对竞品差异：${compGapPct}%</div>
+        <div>最新库存：${last.stock || 0}</div>
+        <div>预测需求：${(last.predictedDemand || 0).toFixed(2)}</div>
+        <div>告警级别：<span class="badge ${alertClass(last.alertLevel)}">${(last.alertLevel || 'GREEN')}</span></div>
+        <div>季节状态：<span class="badge ${last.isPeakSeason ? 'b-amber' : 'b-blue'}">${peakFlag}</span>
+            调节：${(last.seasonalAdjustment * 100).toFixed(1)}%</div>
+      `;
+      renderPriceChart(pid);
+      renderFactors(last);
+    }
+
+    function renderPriceChart(pid) {
+      const data = state.productMap.get(pid) || [];
+      const labels = data.map(d => d.date);
+      const priceSeries = data.map(d => d.finalPrice || d.basePrice);
+      const salesSeries = data.map(d => d.sales || 0);
+      const peakSeries = data.map(d => d.isPeakSeason ? Math.max(...priceSeries) * 1.05 : 0);
+      const competitorSeries = data.map(d => d.competitorPrice || null);
+      if (priceChart) priceChart.destroy();
+      priceChart = new Chart(priceChartCtx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: '价格',
+              data: priceSeries,
+              borderColor: '#8b5cf6',
+              backgroundColor: 'rgba(139,92,246,0.2)',
+              tension: 0.35,
+              yAxisID: 'y'
+            },
+            {
+              label: '销量',
+              data: salesSeries,
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59,130,246,0.15)',
+              tension: 0.35,
+              yAxisID: 'y1'
+            },
+            {
+              label: '竞品价格',
+              data: competitorSeries,
+              borderColor: '#22d3ee',
+              borderDash: [6,4],
+              backgroundColor: 'rgba(34,211,238,0.08)',
+              tension: 0.35,
+              yAxisID: 'y',
+              spanGaps: true
+            },
+            {
+              label: '旺季区间',
+              data: peakSeries,
+              type: 'bar',
+              backgroundColor: 'rgba(245,158,11,0.18)',
+              borderColor: 'rgba(245,158,11,0.4)',
+              borderWidth: 0,
+              yAxisID: 'y',
+              barPercentage: 1.0,
+              categoryPercentage: 1.0
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { beginAtZero: true, ticks: { color: '#e5e7eb' }, grid: { color: '#1f2937' } },
+            y1: { position: 'right', beginAtZero: true, ticks: { color: '#e5e7eb' }, grid: { display: false } },
+            x: { ticks: { color: '#e5e7eb' }, grid: { display: false } }
+          },
+          plugins: { legend: { labels: { color: '#e5e7eb' } } }
+        }
+      });
+    }
+
+    function renderAlerts() {
+      els.alertsTable.innerHTML = '';
+      state.alerts.forEach(a => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${a.productId}</td>
+          <td>${a.stock}</td>
+          <td>${a.predictedDemand.toFixed(2)}</td>
+          <td><span class="badge ${alertClass(a.alertLevel)}">${a.alertLevel}</span></td>
+          <td>¥${a.finalPrice.toFixed(2)}</td>
+        `;
+        els.alertsTable.appendChild(tr);
+      });
+    }
+
+    function renderPricingTable() {
+      els.pricingTable.innerHTML = '';
+      state.productMap.forEach((list, pid) => {
+        const last = list[list.length - 1];
+        const base = last?.basePrice || 0;
+        const finalP = last?.finalPrice || base;
+        const change = base === 0 ? 0 : ((finalP - base) / base) * 100;
+        const comp = last?.competitorPrice || 0;
+        const gap = comp ? ((finalP - comp) / comp) * 100 : 0;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${pid}</td>
+          <td>${last?.date || '-'}</td>
+          <td>¥${base.toFixed(2)}</td>
+          <td>¥${finalP.toFixed(2)}</td>
+          <td>${change.toFixed(2)}%</td>
+          <td>${last?.stock ?? 0}</td>
+          <td>${last?.isPeakSeason ? '旺季' : '常规'}</td>
+          <td>${((last?.seasonalAdjustment || 0) * 100).toFixed(1)}%</td>
+          <td>${comp ? '¥' + comp.toFixed(2) : '-'}</td>
+          <td>${comp ? gap.toFixed(2) + '%' : '-'}</td>
+        `;
+        els.pricingTable.appendChild(tr);
+      });
+    }
+
+    function renderFactors(last) {
+      const tbody = document.querySelector('#factorTable tbody');
+      tbody.innerHTML = '';
+      if (!last) return;
+      const rows = [
+        ['库存与新品 (stock)', last.factorStock],
+        ['竞品 (competitor)', last.factorCompetitor],
+        ['需求/行为 (demand)', last.factorDemand],
+        ['季节/时间 (time)', last.factorTime],
+        ['总调整 (sum)', last.adjustment]
+      ];
+      rows.forEach(([label, val]) => {
+        const tr = document.createElement('tr');
+        const display = (val || val === 0) ? val.toFixed(3) : '-';
+        tr.innerHTML = `<td>${label}</td><td>${display}</td><td></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderMetrics() {
+      els.metricProducts.textContent = state.products.length || '-';
+      els.metricProductsHint.textContent = state.products.length ? '已加载产品' : '等待数据';
+      const activeAlerts = state.alerts.filter(a => (a.alertLevel || '').toUpperCase() !== 'GREEN').length;
+      els.metricAlerts.textContent = activeAlerts;
+      els.metricAlertsHint.textContent = activeAlerts > 0 ? '请关注库存/需求' : '无告警';
+      els.metricUpdated.textContent = state.updatedAt || '-';
+      els.sourceTag.textContent = `数据源: ${state.source}`;
+      const hasPeak = state.rows.some(r => r.isPeakSeason);
+      els.statusHint.textContent = state.products.length
+        ? `状态：数据已加载${hasPeak ? '（含旺季区间）' : ''}`
+        : '状态：等待数据';
+    }
+
+    function renderLogs() {
+      if (!state.logLines.length) {
+        els.logBox.textContent = '未找到 pricing.log 或尚未加载。';
+        return;
+      }
+      els.logBox.innerHTML = state.logLines.slice(-50).map(l => `<div>${l}</div>`).join('');
+    }
+
+    function renderAll() {
+      renderProductSelect();
+      renderAlerts();
+      renderPricingTable();
+      renderMetrics();
+      renderLogs();
+    }
+
+    async function fetchText(path) {
+      const res = await fetch(path);
+      if (!res.ok) throw new Error('fetch failed');
+      return await res.text();
+    }
+
+    async function loadFromOutput() {
+      try {
+        const csv = await fetchText('../output/price_trend_detailed.csv');
+        const rows = parseCSV(csv);
+        ingestRows(rows);
+        state.source = 'output/price_trend_detailed.csv';
+        try {
+          const logText = await fetchText('../output/pricing.log');
+          state.logLines = logText.trim().split(/\r?\n/);
+        } catch (_) {
+          state.logLines = [];
+        }
+        renderLogs();
+      } catch (err) {
+        state.status = 'error';
+        state.source = '未找到 output/price_trend_detailed.csv，请上传';
+        renderMetrics();
+        els.statusHint.textContent = '状态：未找到默认文件，请上传 CSV';
+      }
+    }
+
+    function handleFileUpload(files) {
+      const csvFile = Array.from(files).find(f => f.name.endsWith('.csv'));
+      const logFile = Array.from(files).find(f => f.name.includes('log'));
+      if (csvFile) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const rows = parseCSV(e.target.result);
+          ingestRows(rows);
+          state.source = `上传: ${csvFile.name}`;
+          renderMetrics();
+        };
+        reader.readAsText(csvFile);
+      }
+      if (logFile) {
+        const readerLog = new FileReader();
+        readerLog.onload = (e) => {
+          state.logLines = e.target.result.trim().split(/\r?\n/);
+          renderLogs();
+        };
+        readerLog.readAsText(logFile);
+      }
+    }
+
+    function loadDemo() {
+      const demo = `date,productId,basePrice,finalPrice,stock,alertLevel,sales,predictedDemand
+2025-10-01,P1001,2999,2999,100,GREEN,10,0
+2025-10-02,P1001,2999,2999,85,GREEN,15,0
+2025-10-03,P1001,2999,2999,73,GREEN,12,0
+2025-10-04,P1001,2999,2999,55,GREEN,18,0
+2025-10-05,P1001,2999,2999,35,GREEN,20,0
+2025-10-06,P1001,2899,2899,21,GREEN,14,0
+2025-10-07,P1001,2899,7906.31,5,CRITICAL,16,16.67
+2025-10-01,P1002,5999,5999,50,GREEN,8,0
+2025-10-02,P1002,5999,5999,40,GREEN,10,0
+2025-10-03,P1002,5999,11579.50,28,GREEN,12,10`;
+      ingestRows(parseCSV(demo));
+      state.source = '内置示例';
+      state.logLines = [
+        '=== Pricing System Started ===',
+        '[Thread-demo] Started',
+        '[demo] P1001: ¥2899 -> ¥7906.31 (+172.9%)',
+        '[demo] P1002: ¥5999 -> ¥11579.5 (+93.1%)',
+        '[Thread-demo] Completed: 2 products'
+      ];
+      renderAll();
+    }
+
+    // Event bindings
+    els.productSelect.addEventListener('change', (e) => renderProductInfo(e.target.value));
+    document.getElementById('refreshBtn').addEventListener('click', loadFromOutput);
+    document.getElementById('demoBtn').addEventListener('click', loadDemo);
+    document.getElementById('fileUpload').addEventListener('change', (e) => handleFileUpload(e.target.files));
+
+    // Guide modal
+    const guideModal = document.getElementById('guideModal');
+    const guideClose = document.getElementById('guideClose');
+    function openGuide() { guideModal.style.display = 'flex'; }
+    function closeGuide() { guideModal.style.display = 'none'; }
+    guideClose.addEventListener('click', closeGuide);
+    // 初始弹出一次
+    window.addEventListener('load', openGuide);
+    // 点击遮罩关闭
+    guideModal.addEventListener('click', (e) => { if (e.target === guideModal) closeGuide(); });
+
+    // Initial load attempt
+    loadFromOutput();
+  </script>
+</body>
+</html>

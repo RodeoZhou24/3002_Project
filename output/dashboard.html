@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C++ Intelligent Pricing System</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root { 
+  --bg-body: #0b1121; 
+  --bg-sidebar: #0f172a; 
+  --bg-card: #1e293b; 
+  --bg-card-hover: #334155; 
+  --text-main: #f8fafc; 
+  --text-muted: #94a3b8; 
+  --accent-blue: #3b82f6; 
+  --accent-purple: #8b5cf6; 
+  --accent-green: #10b981; 
+  --accent-red: #ef4444; 
+  --border: #334155; 
+  --console-bg: #0f172a; 
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background-color: var(--bg-body); color: var(--text-main); font-family: 'Inter', sans-serif; height: 100vh; display: flex; overflow: hidden; font-size: 14px; }
+.sidebar { width: 260px; background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px; z-index: 10; }
+.brand { font-size: 1.1rem; font-weight: 700; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; color: #fff; }
+.brand i { color: var(--accent-blue); font-size: 1.2rem; }
+.section-label { color: var(--text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px; }
+.product-item { display: flex; align-items: center; padding: 12px; margin-bottom: 8px; background: rgba(255,255,255,0.03); border: 1px solid transparent; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+.product-item:hover { background: var(--bg-card-hover); }
+.product-item.active { background: rgba(59, 130, 246, 0.15); border-color: var(--accent-blue); }
+.prod-icon { width: 32px; height: 32px; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; margin-right: 12px; color: #000; font-size: 14px; }
+.prod-info { flex: 1; overflow: hidden; }
+.prod-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prod-stock { font-size: 0.75rem; margin-top: 2px; display: flex; align-items: center; gap: 4px; }
+.price-tag { font-weight: 700; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; }
+.main-content { flex: 1; padding: 24px; display: flex; flex-direction: column; overflow-y: auto; gap: 20px; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.header-title { font-size: 1.5rem; font-weight: 700; }
+.header-controls { display: flex; gap: 12px; }
+.btn { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.85rem; transition: 0.2s; white-space: nowrap; }
+.btn-primary { background: var(--accent-green); border-color: var(--accent-green); color: #fff; }
+.btn:hover { opacity: 0.9; }
+.select-wrapper { position: relative; }
+select.btn { appearance: none; -webkit-appearance: none; padding-right: 32px; }
+.select-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-muted); font-size: 0.8rem; }
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.stat-card { background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); position: relative; }
+.stat-label { color: var(--text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }
+.stat-value { font-size: 2rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+.stat-sub { font-size: 0.8rem; margin-top: 6px; font-weight: 500; }
+.stat-icon { position: absolute; top: 20px; right: 20px; font-size: 1.5rem; opacity: 0.3; }
+.chart-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; flex: 1; display: flex; flex-direction: column; min-height: 320px; }
+.panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.panel-title { font-weight: 600; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; }
+.panel-title i { color: var(--accent-purple); }
+.details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 220px; }
+.detail-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; }
+.detail-title { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 16px; }
+.factor-item { margin-bottom: 14px; }
+.factor-header { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.85rem; font-weight: 500; }
+.progress-bg { height: 6px; background: #334155; border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 3px; }
+.data-row { display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.data-row:last-child { border: none; margin-top: auto; padding-bottom: 0; }
+.data-label { color: var(--text-muted); }
+.data-val { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+.val-large { font-size: 1.5rem; color: var(--accent-green); }
+.console-panel { width: 320px; background: var(--console-bg); border-left: 1px solid var(--border); display: flex; flex-direction: column; font-family: 'JetBrains Mono', monospace; }
+.console-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.window-controls { display: flex; gap: 6px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #555; }
+.dot.red { background: #ef4444; } .dot.yellow { background: #f59e0b; } .dot.green { background: #10b981; }
+.console-content { flex: 1; padding: 20px; overflow-y: auto; font-size: 0.8rem; line-height: 1.6; color: #94a3b8; }
+.log-line { margin-bottom: 8px; }
+.cmd-prefix { color: var(--accent-green); margin-right: 8px; }
+.log-time { color: #475569; margin-right: 10px; }
+.highlight { color: #e2e8f0; }
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="brand"><i class="fas fa-microchip"></i> C++ Pricing Core</div>
+  <div class="section-label">INVENTORY MONITOR</div>
+<div class="product-item active" onclick="switchProduct('P1001')" id="btn-P1001">  <div class="prod-icon"><i class="fas fa-mobile-alt"></i></div>  <div class="prod-info">    <div class="prod-name">P1001</div>    <div class="prod-stock" style="color:#ef4444"><i class="fas fa-box"></i> 5</div>  </div>  <div class="price-tag" style="color:#f87171">$3005</div></div><div class="product-item" onclick="switchProduct('P1002')" id="btn-P1002">  <div class="prod-icon"><i class="fas fa-mobile-alt"></i></div>  <div class="prod-info">    <div class="prod-name">P1002</div>    <div class="prod-stock" style="color:#94a3b8"><i class="fas fa-box"></i> 28</div>  </div>  <div class="price-tag" style="color:#10b981">$5687</div></div></div>
+<div class="main-content">
+  <div class="header">
+    <div class="header-title">DASHBOARD V1.0</div>
+    <div class="header-controls">
+      <button class="btn btn-primary"><i class="fas fa-play"></i> SIM STATE: RUNNING</button>
+      <div class="select-wrapper">
+        <select class="btn">
+          <option>Normal Market</option>
+          <option>Double 11 (Shopping Festival)</option>
+          <option>Holiday Season</option>
+        </select>
+        <i class="fas fa-chevron-down select-icon"></i>
+      </div>
+    </div>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Total Revenue</div>
+      <div class="stat-value">$142,590</div>
+      <div class="stat-sub" style="color: var(--accent-green)">+12.5% since start</div>
+      <i class="fas fa-wallet stat-icon"></i>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Active Alerts</div>
+      <div class="stat-value">1</div>
+      <div class="stat-sub" style="color: var(--text-muted)">Inventory warnings</div>
+      <i class="fas fa-exclamation-triangle stat-icon"></i>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Avg Margin</div>
+      <div class="stat-value">18.5%</div>
+      <div class="stat-sub" style="color: var(--accent-blue)">Dynamic Adjustment</div>
+      <i class="fas fa-chart-line stat-icon"></i>
+    </div>
+  </div>
+  <div class="chart-panel">
+    <div class="panel-header">
+      <div class="panel-title">
+        <span id="chart-title-icon"><i class="fas fa-chart-area"></i></span>
+        <span id="chart-title-text">Product Analysis</span>
+      </div>
+    </div>
+    <div style="flex:1; width:100%; position:relative;"><canvas id="mainChart"></canvas></div>
+  </div>
+  <div class="details-grid">
+    <div class="detail-card">
+      <div class="detail-title">Pricing Factors (Weighted)</div>
+      <div class="factor-item">
+        <div class="factor-header"><span>Inv. Scarcity</span><span style="color:var(--accent-red)">-5.0%</span></div>
+        <div class="progress-bg"><div class="progress-fill" style="width: 85%; background: var(--accent-red)"></div></div>
+      </div>
+      <div class="factor-item">
+        <div class="factor-header"><span>Competitor Diff</span><span style="color:var(--accent-red)">-8.0%</span></div>
+        <div class="progress-bg"><div class="progress-fill" style="width: 40%; background: var(--accent-red)"></div></div>
+      </div>
+      <div class="factor-item">
+        <div class="factor-header"><span>Demand Spike</span><span style="color:var(--accent-green)">+5.0%</span></div>
+        <div class="progress-bg"><div class="progress-fill" style="width: 60%; background: var(--accent-green)"></div></div>
+      </div>
+    </div>
+    <div class="detail-card">
+      <div class="detail-title">Algorithm Output</div>
+      <div class="data-row">
+        <span class="data-label">Base Price:</span><span class="data-val" id="val-base">$0.00</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Adjustment:</span><span class="data-val" id="val-adj" style="color:var(--accent-blue)">0.0%</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Final Price:</span><span class="data-val val-large" id="val-final">$0.00</span>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="console-panel">
+  <div class="console-header">
+    <span>Console Output</span>
+    <div class="window-controls"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
+  </div>
+  <div class="console-content" id="console">
+    <div class="log-line">// System Initialized.</div>
+    <div class="log-line">Waiting for start...</div>
+    <div class="log-line"><span class="log-time">[01:00:00]</span> <span class="highlight">Initializing DataLoader...</span></div>
+    <div class="log-line"><span class="log-time">[01:00:01]</span> Loading sales_history.txt...</div>
+    <div class="log-line"><span class="log-time">[01:00:02]</span> <span class="cmd-prefix">>></span>Forecasting Model Ready.</div>
+  </div>
+  <div style="padding:10px; border-top:1px solid var(--border); font-size:0.7rem; color:#475569; text-align:center;">Thread Safety: std::mutex active</div>
+</div>
+<script>
+const allProductData = {
+  'P1001': {
+    labels: ['2025-10-01','2025-10-02','2025-10-03','2025-10-04','2025-10-05','2025-10-06','2025-10-07'],
+    prices: [2999.00,2999.00,2999.00,2999.00,2999.00,2899.00,3005.78],
+    demands: [0.00,0.00,0.00,0.00,0.00,0.00,16.67],
+    basePrice: 2999.00,
+    finalPrice: 3005.78,
+    change: 0.2
+  },
+  'P1002': {
+    labels: ['2025-10-01','2025-10-02','2025-10-03'],
+    prices: [5999.00,5999.00,5687.05],
+    demands: [0.00,0.00,10.00],
+    basePrice: 5999.00,
+    finalPrice: 5687.05,
+    change: -5.2
+  },
+};
+
+const ctx = document.getElementById('mainChart').getContext('2d');
+let chart;
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.color = '#64748b';
+function initChart(labels, prices, demands) {
+  let gradP = ctx.createLinearGradient(0,0,0,300);
+  gradP.addColorStop(0, 'rgba(139, 92, 246, 0.5)');
+  gradP.addColorStop(1, 'rgba(139, 92, 246, 0)');
+  if(chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Price ($)', data: prices, borderColor: '#8b5cf6', backgroundColor: gradP, borderWidth: 2, tension: 0.4, fill: true, pointRadius: 0, pointHoverRadius: 6
+      }, {
+        label: 'Demand', data: demands, borderColor: '#3b82f6', borderDash: [4,4], borderWidth: 2, tension: 0.4, yAxisID: 'y1', pointRadius: 0
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, 
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { display: true, labels: { usePointStyle: true, color: '#94a3b8' } } },
+      scales: { 
+        x: { grid: { display: false }, ticks: { color: '#475569' } }, 
+        y: { grid: { color: '#334155' }, ticks: { color: '#475569' } }, 
+        y1: { position: 'right', grid: { display: false }, ticks: { display: false } } 
+      }
+    }
+  });
+}
+window.switchProduct = function(pid) {
+  document.querySelectorAll('.product-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('btn-'+pid).classList.add('active');
+  const d = allProductData[pid];
+  if(d) {
+    initChart(d.labels, d.prices, d.demands);
+    document.getElementById('chart-title-text').innerText = pid + ' Analysis';
+    document.getElementById('val-base').innerText = '$' + d.basePrice;
+    document.getElementById('val-final').innerText = '$' + d.finalPrice;
+    const adjEl = document.getElementById('val-adj');
+    adjEl.innerText = (d.change > 0 ? '+' : '') + d.change + '%';
+    adjEl.style.color = d.change >= 0 ? '#10b981' : '#ef4444';
+    log('Switched view to ' + pid);
+  }
+};
+if (allProductData['P1001']) { switchProduct('P1001'); }
+const logMessages = [
+  'Analyzing competitor pricing strategies...',
+  'Checking inventory levels across warehouses...',
+  'Syncing demand forecast data...',
+  'Optimizing profit margins...',
+  'Detecting market trend anomalies...'
+];
+function log(msg) {
+  const d = document.createElement('div'); d.className = 'log-line';
+  const time = new Date().toLocaleTimeString().split(' ')[0];
+  d.innerHTML = `<span class="log-time">[${time}]</span> ${msg}`;
+  const win = document.getElementById('console'); win.appendChild(d); win.scrollTop = win.scrollHeight;
+}
+setInterval(() => {
+  const msg = logMessages[Math.floor(Math.random() * logMessages.length)];
+  log(msg);
+}, 4000);
+</script>
+</body>
+</html>
